@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>stack-viewer — k3s-gitops</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f7f7f8;
+    --surface: #ffffff;
+    --border: #e2e2e6;
+    --text: #1a1a1e;
+    --muted: #63636c;
+    --accent: #4f46e5;
+    --accent-soft: #eef0ff;
+    --mono-bg: #f0f0f4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1115;
+      --surface: #171a21;
+      --border: #2a2e38;
+      --text: #ecedf1;
+      --muted: #9aa0ac;
+      --accent: #818cf8;
+      --accent-soft: #1e2036;
+      --mono-bg: #1c1f28;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+  }
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+  header {
+    margin-bottom: 2.5rem;
+  }
+  h1 {
+    font-size: 1.9rem;
+    margin: 0 0 0.4rem;
+    letter-spacing: -0.02em;
+  }
+  .tagline {
+    color: var(--muted);
+    font-size: 1rem;
+    margin: 0;
+  }
+  .runtime {
+    margin-top: 1.25rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .pill {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: 999px;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.8rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  h2 {
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin: 0 0 1rem;
+  }
+  section { margin-bottom: 3rem; }
+  .layers {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 1rem;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+  }
+  .card .label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+  }
+  .card h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.05rem;
+  }
+  .card p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  .card .lives-in {
+    margin-top: 0.75rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.78rem;
+    color: var(--text);
+    background: var(--mono-bg);
+    border-radius: 6px;
+    padding: 0.35rem 0.5rem;
+    display: inline-block;
+  }
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border-left: 2px solid var(--border);
+    margin-left: 0.6rem;
+  }
+  .step {
+    position: relative;
+    padding: 0 0 1.5rem 1.5rem;
+  }
+  .step:last-child { padding-bottom: 0; }
+  .step::before {
+    content: "";
+    position: absolute;
+    left: -7px;
+    top: 0.15rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg);
+  }
+  .step strong { display: block; font-size: 0.95rem; }
+  .step span { color: var(--muted); font-size: 0.85rem; }
+  footer {
+    color: var(--muted);
+    font-size: 0.8rem;
+    border-top: 1px solid var(--border);
+    padding-top: 1.5rem;
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>stack-viewer</h1>
+    <p class="tagline">Esta página corre dentro del cluster que describe. Si la estás viendo, el pipeline completo funcionó.</p>
+    <div class="runtime">
+      <span class="pill">ambiente: ${ENVIRONMENT}</span>
+      <span class="pill">cluster: ${CLUSTER_NAME}</span>
+      <span class="pill">namespace: ${POD_NAMESPACE}</span>
+      <span class="pill">pod: ${POD_NAME}</span>
+      <span class="pill">dominio base: ${BASE_DOMAIN}</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>Capas del stack</h2>
+    <div class="layers">
+      <div class="card">
+        <div class="label">Infraestructura</div>
+        <h3>k3s-infra</h3>
+        <p>Ansible. Provisiona el servidor, endurece SSH/firewall, instala k3s y hace el bootstrap de Argo CD. No sabe nada de aplicaciones — su trabajo termina cuando Argo CD queda corriendo.</p>
+        <span class="lives-in">roles/, playbooks/site.yml</span>
+      </div>
+      <div class="card">
+        <div class="label">Estado deseado</div>
+        <h3>k3s-gitops</h3>
+        <p>Única fuente de verdad que Argo CD sincroniza: charts de Helm por app y las Applications que le dicen a Argo CD qué mirar. Nada de código de aplicación vive acá.</p>
+        <span class="lives-in">charts/, argocd-apps/</span>
+      </div>
+      <div class="card">
+        <div class="label">Motor de GitOps</div>
+        <h3>Argo CD</h3>
+        <p>Corre dentro del propio cluster. Hace pull de k3s-gitops, compara contra el estado real y reconcilia — nadie le hace push ni le corre kubectl apply desde afuera.</p>
+        <span class="lives-in">namespace argocd</span>
+      </div>
+      <div class="card">
+        <div class="label">Aplicación</div>
+        <h3>stack-viewer (este repo)</h3>
+        <p>Código + Dockerfile + workflow de CI. No tiene un solo YAML de Kubernetes — eso vive centralizado en k3s-gitops, no repartido por cada repo de app.</p>
+        <span class="lives-in">src, Dockerfile, .github/workflows/</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>De un commit a este pod</h2>
+    <div class="pipeline">
+      <div class="step"><strong>1. Push al repo de la app</strong><span>Código nuevo entra a main.</span></div>
+      <div class="step"><strong>2. CI construye y publica la imagen</strong><span>docker build + push a ghcr.io, tag = SHA del commit.</span></div>
+      <div class="step"><strong>3. CI edita k3s-gitops</strong><span>Bump de image.tag en values-&lt;ambiente&gt;.yaml, commit + push.</span></div>
+      <div class="step"><strong>4. Argo CD detecta el diff</strong><span>Poll periódico contra el repo — nadie le avisa manualmente.</span></div>
+      <div class="step"><strong>5. Argo CD sincroniza</strong><span>Aplica el Deployment actualizado contra el cluster real.</span></div>
+      <div class="step"><strong>6. k3s hace el rolling update</strong><span>Y estás viendo el resultado, ahora mismo, en esta página.</span></div>
+    </div>
+  </section>
+
+  <footer>
+    stack-viewer · desplegado vía Argo CD desde k3s-gitops · project homelab
+  </footer>
+</main>
+</body>
+</html>
