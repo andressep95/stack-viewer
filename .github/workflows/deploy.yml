@@ -31,6 +31,14 @@ jobs:
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/stack-viewer:${{ steps.vars.outputs.sha_short }}
 
+      - name: Escanear vulnerabilidades con Trivy
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ghcr.io/${{ github.repository_owner }}/stack-viewer:${{ steps.vars.outputs.sha_short }}
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+          format: table
+
   bump-manifest:
     needs: build-and-push
     runs-on: ubuntu-latest
