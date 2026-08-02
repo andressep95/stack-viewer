@@ -7,6 +7,9 @@ para confirmar que el pipeline completo (commit → imagen → Argo CD →
 pod) funciona, y como plantilla de partida para el repo de una app
 nueva — este repo está marcado como **template** en GitHub.
 
+Corriendo en vivo, con HTTPS real (Let's Encrypt vía cert-manager):
+**https://stack-viewer-dev.cloudcentinel.com**
+
 Ver el roadmap completo en `kubernetes-practice/roadmap.md` (repo
 hermano `k3s-infra`/`k3s-gitops`).
 
