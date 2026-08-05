@@ -155,9 +155,6 @@
     <div class="runtime">
       <span class="pill">ambiente: ${ENVIRONMENT}</span>
       <span class="pill">cluster: ${CLUSTER_NAME}</span>
-      <span class="pill">namespace: ${POD_NAMESPACE}</span>
-      <span class="pill">pod: ${POD_NAME}</span>
-      <span class="pill">dominio base: ${BASE_DOMAIN}</span>
     </div>
   </header>
 
