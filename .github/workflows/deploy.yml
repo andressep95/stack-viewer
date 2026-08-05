@@ -2,7 +2,7 @@ name: deploy
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   workflow_dispatch: {}
 
 jobs:
@@ -39,8 +39,11 @@ jobs:
           exit-code: '1'
           format: table
 
-  bump-manifest:
+  # develop → charts/stack-viewer/values-dev.yaml. Sin gate: cada push
+  # a develop llega solo a stack-viewer-dev.
+  bump-manifest-dev:
     needs: build-and-push
+    if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -52,5 +55,27 @@ jobs:
           yq -i '.image.tag = "${{ needs.build-and-push.outputs.sha_short }}"' charts/stack-viewer/values-dev.yaml
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git commit -am "deploy: stack-viewer@${{ needs.build-and-push.outputs.sha_short }}"
+          git commit -am "deploy: stack-viewer-dev@${{ needs.build-and-push.outputs.sha_short }}"
+          git push
+
+  # main → charts/stack-viewer/values-prod.yaml. environment: production
+  # pausa el job hasta que alguien lo apruebe manualmente en Actions
+  # (requiere el Environment "production" con reviewer configurado en
+  # GitHub, ver Settings → Environments del repo).
+  bump-manifest-prod:
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: andressep95/k3s-gitops
+          ssh-key: ${{ secrets.GITOPS_DEPLOY_KEY }}
+
+      - run: |
+          yq -i '.image.tag = "${{ needs.build-and-push.outputs.sha_short }}"' charts/stack-viewer/values-prod.yaml
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "deploy: stack-viewer-prod@${{ needs.build-and-push.outputs.sha_short }}"
           git push
