@@ -56,7 +56,23 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git commit -am "deploy: stack-viewer-dev@${{ needs.build-and-push.outputs.sha_short }}"
-          git push
+
+          # k3s-gitops recibe bumps de varios repos (memory, gateway, skills,
+          # stack-viewer) que pueden correr en simultáneo -- sin este retry,
+          # un push rechazado por "fetch first" hacía fallar el job entero y
+          # requería reintentarlo a mano.
+          for i in 1 2 3 4 5; do
+            if git push; then
+              exit 0
+            fi
+            echo "push rechazado (intento $i/5) -- rebase contra origin/main y reintento"
+            git fetch origin main
+            git rebase origin/main
+            sleep $((i * 3))
+          done
+
+          echo "no se pudo pushear tras 5 intentos" >&2
+          exit 1
 
   # main → charts/stack-viewer/values-prod.yaml. environment: production
   # pausa el job hasta que alguien lo apruebe manualmente en Actions
@@ -78,4 +94,20 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git commit -am "deploy: stack-viewer-prod@${{ needs.build-and-push.outputs.sha_short }}"
-          git push
+
+          # k3s-gitops recibe bumps de varios repos (memory, gateway, skills,
+          # stack-viewer) que pueden correr en simultáneo -- sin este retry,
+          # un push rechazado por "fetch first" hacía fallar el job entero y
+          # requería reintentarlo a mano.
+          for i in 1 2 3 4 5; do
+            if git push; then
+              exit 0
+            fi
+            echo "push rechazado (intento $i/5) -- rebase contra origin/main y reintento"
+            git fetch origin main
+            git rebase origin/main
+            sleep $((i * 3))
+          done
+
+          echo "no se pudo pushear tras 5 intentos" >&2
+          exit 1
